@@ -11,18 +11,18 @@ def render_home() -> None:
     st.write(
         "AdLab 用可修改参数、可运行算法和可解释的结果，帮助你学习竞价、预测、统计检验和投放优化。"
     )
-    st.info("当前为第一阶段：平台基础。A/B 测试是下一阶段要完成的第一个可运行实验。", icon="ℹ️")
+    st.success("第二阶段已开放：A/B 测试可运行、可解释，并可在本机保存实验记录。")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("计划实验", "5 个")
-    col2.metric("当前阶段", "1 / 7")
+    col2.metric("当前阶段", "2 / 7")
     col3.metric("数据来源", "本地 / 合成")
 
     st.subheader("学习路径")
     st.write("按阶段逐个实现和验证。左侧导航可以查看每个模块的目标与开发状态。")
     for experiment in sorted(EXPERIMENTS[1:6], key=lambda item: item.stage):
         with st.container(border=True):
-            st.caption(f"阶段 {experiment.stage} · 规划中")
+            st.caption(f"阶段 {experiment.stage} · {'已开放' if experiment.status == 'available' else '规划中'}")
             st.markdown(f"**{experiment.title} · {experiment.english_title}**")
             st.write(experiment.summary)
 

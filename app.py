@@ -3,8 +3,11 @@
 import streamlit as st
 
 from adlab.config import EXPERIMENTS, get_experiment
+from adlab.ui.ab_test import render_ab_test
+from adlab.ui.docs import render_docs
 from adlab.ui.home import render_home
 from adlab.ui.planned import render_planned
+from adlab.ui.records import render_records
 
 
 st.set_page_config(
@@ -24,9 +27,15 @@ with st.sidebar:
         label_visibility="collapsed",
     )
     st.divider()
-    st.caption("本地运行 · 免费开源 · 第一阶段")
+    st.caption("本地运行 · 免费开源 · 第二阶段")
 
 if selected_slug == "home":
     render_home()
+elif selected_slug == "ab_test":
+    render_ab_test()
+elif selected_slug == "records":
+    render_records()
+elif selected_slug == "docs":
+    render_docs()
 else:
     render_planned(get_experiment(selected_slug))

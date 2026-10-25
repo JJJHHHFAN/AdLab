@@ -22,4 +22,6 @@ def test_experiment_identifiers_are_unique_and_lookup_is_stable():
 
 
 def test_future_experiments_are_not_marked_complete():
-    assert all(experiment.status == "planned" for experiment in EXPERIMENTS[1:])
+    assert {item.slug for item in EXPERIMENTS if item.status == "available"} == {
+        "home", "ab_test", "records", "docs"
+    }

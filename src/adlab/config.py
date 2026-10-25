@@ -22,10 +22,10 @@ EXPERIMENTS: tuple[Experiment, ...] = (
     Experiment("auction", "广告竞价", "Ad Auctions", "比较出价、排名与支付规则。", 3, "planned"),
     Experiment("ctr", "CTR 预测", "Click-Through Rate", "学习数据划分、概率预测与校准。", 4, "planned"),
     Experiment("budget", "预算优化", "Budget Allocation", "在约束条件下分配广告计划预算。", 5, "planned"),
-    Experiment("ab_test", "A/B 测试", "A/B Testing", "分析比例差异、区间和统计功效。", 2, "planned"),
+    Experiment("ab_test", "A/B 测试", "A/B Testing", "分析比例差异、区间和统计功效。", 2, "available"),
     Experiment("bandit", "多臂老虎机", "Multi-Armed Bandits", "观察探索与利用之间的权衡。", 6, "planned"),
-    Experiment("records", "实验记录", "Experiment History", "回顾保存的输入、配置与实验结果。", 2, "planned"),
-    Experiment("docs", "学习文档", "Learning Notes", "阅读公式、计算示例和延伸资料。", 7, "planned"),
+    Experiment("records", "实验记录", "Experiment History", "回顾保存的输入、配置与实验结果。", 2, "available"),
+    Experiment("docs", "学习文档", "Learning Notes", "阅读公式、计算示例和延伸资料。", 2, "available"),
 )
 
 
