@@ -33,3 +33,4 @@
 - Streamlit `AppTest`：首页和 A/B 测试规划页均无执行异常。
 - Plotly 通用比较图：输入标签和值保留正确。
 - `compileall`：入口、源码与测试无语法错误。
+- 实际启动本地服务：`/` 与 `/_stcore/health` 均返回 HTTP 200。
