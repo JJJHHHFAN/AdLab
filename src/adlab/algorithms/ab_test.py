@@ -147,7 +147,7 @@ def analyze_ab(inputs: ABInput) -> ABResult:
         test_method=method,
         statistic=statistic,
         p_value=p_value,
-        significant=p_value < inputs.alpha,
+        significant=p_value <= inputs.alpha,
         alpha=inputs.alpha,
         duration_days=inputs.duration_days,
     )
@@ -161,11 +161,19 @@ def _validate_planning(baseline_rate: float, mde: float, alpha: float) -> float:
     return baseline_rate + mde
 
 
+def _require_normal_approximation(n: int, p1: float, p2: float) -> None:
+    pooled = (p1 + p2) / 2
+    expected = [n * rate for rate in (p1, 1 - p1, p2, 1 - p2, pooled, 1 - pooled)]
+    if min(expected) < 5:
+        raise ValueError("当前参数的预期成功或失败人数不足 5，正态近似功效不可靠；请缩小差异或改用精确规划")
+
+
 def prospective_power(n_per_group: int, baseline_rate: float, mde: float, alpha: float = 0.05) -> float:
     """双侧两样本比例 z 检验在假定效应下的事前近似功效。"""
     p2 = _validate_planning(baseline_rate, mde, alpha)
     if isinstance(n_per_group, bool) or not isinstance(n_per_group, int) or n_per_group <= 0:
         raise ValueError("每组样本量必须为正整数")
+    _require_normal_approximation(n_per_group, baseline_rate, p2)
     pooled = (baseline_rate + p2) / 2
     null_sd = sqrt(2 * pooled * (1 - pooled) / n_per_group)
     alternative_sd = sqrt((baseline_rate * (1 - baseline_rate) + p2 * (1 - p2)) / n_per_group)
@@ -187,6 +195,7 @@ def estimate_sample_size(
         + z_power * sqrt(baseline_rate * (1 - baseline_rate) + p2 * (1 - p2))
     ) ** 2
     n = max(1, ceil(numerator / (mde * mde)))
+    _require_normal_approximation(n, baseline_rate, p2)
     while prospective_power(n, baseline_rate, mde, alpha) < target_power:
         n += 1
     while n > 1 and prospective_power(n - 1, baseline_rate, mde, alpha) >= target_power:

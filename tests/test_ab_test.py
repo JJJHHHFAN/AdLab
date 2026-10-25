@@ -80,3 +80,15 @@ def test_identical_all_zero_groups_have_valid_p_value():
     assert result.p_value == 1.0
     assert not result.significant
     assert math.isfinite(result.diff_ci[0]) and math.isfinite(result.diff_ci[1])
+
+
+def test_p_value_equal_to_alpha_is_significant():
+    result = analyze_ab(ABInput(Arm(1, 0, 0), Arm(9, 9, 0), 7, alpha=0.10))
+    assert result.p_value == pytest.approx(0.1)
+    assert result.significant
+
+
+@pytest.mark.parametrize("baseline,mde", [(0.01, 0.50), (0.01, 0.90)])
+def test_sample_size_rejects_sparse_normal_approximation(baseline, mde):
+    with pytest.raises(ValueError, match="正态近似"):
+        estimate_sample_size(baseline, mde, alpha=0.05, target_power=0.8)

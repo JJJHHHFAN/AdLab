@@ -11,10 +11,15 @@ from adlab.algorithms.ab_test import (
 )
 from adlab.charts.intervals import ab_interval_figure, difference_interval_figure
 from adlab.data.records import DEFAULT_DB_PATH, save_run
+from adlab.ui.formatting import format_p_value
 
 
 def _percent(value: float | None) -> str:
     return "无法计算" if value is None else f"{value:.2%}"
+
+
+def _interval_text(interval: tuple[float, float] | None) -> str:
+    return "无法计算" if interval is None else f"[{interval[0]:.2%}, {interval[1]:.2%}]"
 
 
 def render_ab_test() -> None:
@@ -52,6 +57,7 @@ def render_ab_test() -> None:
 
     if submitted:
         st.session_state.pop("ab_run", None)
+        st.session_state.pop("ab_saved_id", None)
         inputs = ABInput(
             Arm(a_users, a_clicks, a_conversions),
             Arm(b_users, b_clicks, b_conversions),
@@ -79,6 +85,7 @@ def render_ab_test() -> None:
         target_power = col3.selectbox("目标统计功效", [0.8, 0.9], format_func=lambda x: f"{x:.0%}")
         plan = st.form_submit_button("估算样本量")
     if plan:
+        st.session_state.pop("sample_plan", None)
         try:
             per_group = estimate_sample_size(
                 baseline_percent / 100,
@@ -90,8 +97,14 @@ def render_ab_test() -> None:
             st.error(str(error))
         else:
             power = prospective_power(per_group, baseline_percent / 100, mde_points / 100, alpha)
-            st.info(f"预计每组至少 **{per_group:,} 位独立用户**，两组共 {2 * per_group:,} 位；近似功效 {power:.1%}。")
-            st.caption("按等量分组、双侧比例检验和固定样本量计算；实际流量、丢失与重复曝光会改变所需周期。")
+            st.session_state["sample_plan"] = (per_group, power, alpha)
+    if "sample_plan" in st.session_state:
+        per_group, power, plan_alpha = st.session_state["sample_plan"]
+        st.info(
+            f"预计每组至少 **{per_group:,} 位独立用户**，两组共 {2 * per_group:,} 位；"
+            f"近似功效 {power:.1%}，规划时 α={plan_alpha:.0%}。"
+        )
+        st.caption("按等量分组、双侧比例检验和固定样本量计算；实际流量、丢失与重复曝光会改变所需周期。")
 
     st.subheader("现实业务应用")
     st.write("可用来评估素材、落地页或投放策略的预先定义指标。上线决策还需结合收益、成本、风险和后续观察。")
@@ -123,10 +136,19 @@ def _render_results(inputs: ABInput, result) -> None:
         hide_index=True,
         width="stretch",
     )
+    with st.expander("查看补充指标的置信区间"):
+        st.dataframe(
+            [
+                {"组别": "A 组", "CTR 区间": _interval_text(result.a.ctr_ci), "点击后 CVR 区间（描述性）": _interval_text(result.a.cvr_ci), "每用户转化率区间": _interval_text(result.a.conversion_ci)},
+                {"组别": "B 组", "CTR 区间": _interval_text(result.b.ctr_ci), "点击后 CVR 区间（描述性）": _interval_text(result.b.cvr_ci), "每用户转化率区间": _interval_text(result.b.conversion_ci)},
+            ],
+            hide_index=True,
+            width="stretch",
+        )
 
     st.subheader("4 · 结果解释")
     method = "双侧合并比例 z 检验" if result.test_method == "pooled_z" else "双侧 Fisher 精确检验"
-    st.markdown(f"**p 值：{result.p_value:.4f}** · 方法：{method} · 预设 α：{result.alpha:.0%}")
+    st.markdown(f"**p 值：{format_p_value(result.p_value)}** · 方法：{method} · 预设 α：{result.alpha:.0%}")
     st.write(
         f"B − A = {result.absolute_diff:+.2%}；"
         f"{1 - result.alpha:.0%} 差值区间为 [{result.diff_ci[0]:+.2%}, {result.diff_ci[1]:+.2%}]。"
@@ -140,6 +162,16 @@ def _render_results(inputs: ABInput, result) -> None:
         "请结合绝对提升、区间宽度、收益成本和实验质量决定是否上线。"
     )
     st.caption(f"实验记录周期：{inputs.duration_days} 天。若实验中途反复查看并按显著性提前停止，常规 p 值不再保持原有解释。")
-    if st.button("保存本次实验"):
-        run_id = save_run(DEFAULT_DB_PATH, inputs, result)
-        st.success(f"已保存为本地实验记录 #{run_id}。")
+    st.button(
+        "保存本次实验",
+        disabled="ab_saved_id" in st.session_state,
+        on_click=_save_current_run,
+        args=(inputs, result),
+    )
+    if "ab_saved_id" in st.session_state:
+        st.success(f"已保存为本地实验记录 #{st.session_state['ab_saved_id']}。")
+
+
+def _save_current_run(inputs: ABInput, result) -> None:
+    if "ab_saved_id" not in st.session_state:
+        st.session_state["ab_saved_id"] = save_run(DEFAULT_DB_PATH, inputs, result)

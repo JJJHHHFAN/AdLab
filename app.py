@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="AdLab · 计算广告算法实验室",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 with st.sidebar:

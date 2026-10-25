@@ -3,6 +3,7 @@
 import streamlit as st
 
 from adlab.data.records import list_runs
+from adlab.ui.formatting import format_p_value
 
 
 def render_records() -> None:
@@ -20,7 +21,7 @@ def render_records() -> None:
             st.write(
                 f"A 组：{run.result['a_rate']:.2%}　"
                 f"B 组：{run.result['b_rate']:.2%}　"
-                f"p 值：{run.result['p_value']:.4f}"
+                f"p 值：{format_p_value(run.result['p_value'])}"
             )
             st.caption(f"检验方法：{run.result['test_method']} · 显著性水平：{run.result['alpha']:.0%}")
             st.json({"输入": run.inputs, "计算结果": run.result}, expanded=False)
