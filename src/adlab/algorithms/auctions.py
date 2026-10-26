@@ -12,6 +12,9 @@ MECHANISMS: tuple[Mechanism, ...] = (
     "gsp",
     "quality_gsp",
 )
+MIN_POSITIVE_INPUT = 1e-12
+MAX_NUMERIC_INPUT = 1e12
+MAX_IMPRESSIONS = 1_000_000_000_000
 
 
 @dataclass(frozen=True)
@@ -80,6 +83,8 @@ def _validate_request(request: AuctionRequest) -> None:
                 raise ValueError(f"{name} 必须是有限数字")
             if value < 0 or (not allow_zero and value == 0):
                 raise ValueError(f"{name} 超出允许范围")
+            if value > MAX_NUMERIC_INPUT or (0 < value < MIN_POSITIVE_INPUT):
+                raise ValueError(f"{name} 超出教学模型的安全数值范围（正值需在 1e-12 至 1e12 之间）")
 
     if not request.slot_ctrs:
         raise ValueError("至少需要一个广告位")
@@ -89,9 +94,13 @@ def _validate_request(request: AuctionRequest) -> None:
             raise ValueError("广告位 CTR 必须是有限数字")
         if not 0 <= ctr <= previous:
             raise ValueError("广告位 CTR 必须介于 0 和 1，且按广告位非递增")
+        if 0 < ctr < MIN_POSITIVE_INPUT:
+            raise ValueError("广告位 CTR 超出教学模型的安全数值范围（正值至少为 1e-12）")
         previous = ctr
     if isinstance(request.impressions, bool) or not isinstance(request.impressions, int) or request.impressions <= 0:
         raise ValueError("展示周期内的曝光次数必须是正整数")
+    if request.impressions > MAX_IMPRESSIONS:
+        raise ValueError("展示周期内的曝光次数超出教学模型的安全数值范围（最多 1e12）")
 
 
 def simulate_auction(request: AuctionRequest, mechanism: Mechanism) -> AuctionOutcome:

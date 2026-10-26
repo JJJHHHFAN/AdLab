@@ -2,7 +2,14 @@
 
 import streamlit as st
 
-from adlab.algorithms.auctions import AuctionRequest, Bidder, Mechanism, compare_auctions
+from adlab.algorithms.auctions import (
+    MAX_IMPRESSIONS,
+    MAX_NUMERIC_INPUT,
+    AuctionRequest,
+    Bidder,
+    Mechanism,
+    compare_auctions,
+)
 from adlab.charts.comparison import comparison_bar
 from adlab.data.records import DEFAULT_DB_PATH, save_auction_run
 
@@ -49,7 +56,10 @@ def render_auction() -> None:
 
     st.caption("预填数字是教学算例。出价、点击价值、预算与收入均为抽象货币单位，不代表真实市场价格。")
     with st.form("auction_inputs"):
-        impressions = st.number_input("每个广告位在本周期的展示机会", min_value=1, value=1000, step=100)
+        impressions = st.number_input(
+            "每个广告位在本周期的展示机会", min_value=1, max_value=MAX_IMPRESSIONS,
+            value=1000, step=100,
+        )
         bidders: list[Bidder] = []
         for index in range(number_of_bidders):
             bidder_id = chr(ord("A") + index)
@@ -57,10 +67,22 @@ def render_auction() -> None:
             with st.container(border=True):
                 st.markdown(f"**广告主 {bidder_id}**")
                 left, right = st.columns(2)
-                bid = left.number_input(f"{bidder_id} 出价 / 次点击", min_value=0.0, value=default_bid, step=0.5)
-                quality = right.number_input(f"{bidder_id} 质量分", min_value=0.1, value=default_quality, step=0.1)
-                value = left.number_input(f"{bidder_id} 每次点击价值", min_value=0.0, value=default_value, step=0.5)
-                budget = right.number_input(f"{bidder_id} 周期预算上限", min_value=0.0, value=1000.0, step=50.0)
+                bid = left.number_input(
+                    f"{bidder_id} 出价 / 次点击", min_value=0.0, max_value=MAX_NUMERIC_INPUT,
+                    value=default_bid, step=0.5,
+                )
+                quality = right.number_input(
+                    f"{bidder_id} 质量分", min_value=0.1, max_value=MAX_NUMERIC_INPUT,
+                    value=default_quality, step=0.1,
+                )
+                value = left.number_input(
+                    f"{bidder_id} 每次点击价值", min_value=0.0, max_value=MAX_NUMERIC_INPUT,
+                    value=default_value, step=0.5,
+                )
+                budget = right.number_input(
+                    f"{bidder_id} 周期预算上限", min_value=0.0, max_value=MAX_NUMERIC_INPUT,
+                    value=1000.0, step=50.0,
+                )
                 bidders.append(Bidder(bidder_id, bid, quality, value, budget))
 
         st.markdown("**广告位点击率（从高位到低位）**")

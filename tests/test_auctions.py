@@ -127,3 +127,39 @@ def test_invalid_inputs_are_rejected(bad_request):
 def test_unknown_mechanism_is_rejected(auction_request):
     with pytest.raises(ValueError):
         simulate_auction(auction_request, "vcg")
+
+
+@pytest.mark.parametrize(
+    "bad_request",
+    [
+        AuctionRequest(
+            (Bidder("A", 1e308, 2, 3, 100), Bidder("B", 1e308, 10, 3, 100)),
+            (0.1,),
+            100,
+        ),
+        AuctionRequest(
+            (Bidder("A", 1e-200, 1e-200, 3, 100), Bidder("B", 1e-201, 1e-200, 3, 100)),
+            (0.1,),
+            100,
+        ),
+    ],
+)
+def test_quality_score_numeric_overflow_and_underflow_are_rejected(bad_request):
+    with pytest.raises(ValueError, match="数值范围"):
+        simulate_auction(bad_request, "quality_gsp")
+
+
+def test_upper_safe_numeric_bound_produces_finite_results():
+    auction_request = AuctionRequest(
+        bidders=(
+            Bidder("A", 1e12, 1e12, 1e12, 1e12),
+            Bidder("B", 1e12, 1e12, 1e12, 1e12),
+        ),
+        slot_ctrs=(1.0,),
+        impressions=1_000_000_000_000,
+    )
+    result = simulate_auction(auction_request, "quality_gsp")
+    assert result.ranking == ("A", "B")
+    assert math.isfinite(result.platform_revenue)
+    assert math.isfinite(result.advertiser_surplus)
+    assert all(math.isfinite(item.cpc) and math.isfinite(item.spend) for item in result.allocations)
