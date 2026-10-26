@@ -31,7 +31,7 @@ uv run pytest
 - CTR 预测：生成可复现的合成曝光，选择时间或随机划分，比较 Logistic Regression 与 Random Forest，并查看测试集 ROC、概率分布和校准图。
 - 实验记录：将本次输入与计算结果保存到本机 SQLite 数据库，并在记录页查看。
 - 学习文档：阅读 A/B 测试、广告竞价和 CTR 预测的概念、公式、算例与局限。
-- 示例输入：[A/B 教学算例](examples/ab_test_example.json)、[竞价教学算例](examples/auction_example.json)和[CTR 合成曝光样例](examples/ctr_sample.csv)，均非真实投放数据。
+- 示例文件：[A/B 教学算例](examples/ab_test_example.json)、[竞价教学算例](examples/auction_example.json)和[CTR 合成曝光数据（1,000 行）](examples/ctr_sample.csv)，均非真实投放数据。CTR 页面按参数生成数据，不从 CSV 导入。
 - 左侧导航：查看八个页面；预算优化与多臂老虎机明确标为“规划中”。
 
 统计定义、公式与验证算例见 [A/B 测试方法](docs/ab-test-methods.md)、[竞价方法](docs/auction-methods.md)和[CTR 预测方法](docs/ctr-methods.md)。算法层、数据层、可视化层和 UI 的职责见 [架构说明](docs/architecture.md)。阶段任务见 [第一阶段](docs/superpowers/plans/2026-10-25-stage-1-foundation.md)、[第二阶段](docs/superpowers/plans/2026-10-25-stage-2-ab-test.md)、[第三阶段](docs/superpowers/plans/2026-10-26-stage-3-auctions.md)与[第四阶段](docs/superpowers/plans/2026-10-26-stage-4-ctr.md)。

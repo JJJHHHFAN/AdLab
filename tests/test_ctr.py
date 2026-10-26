@@ -92,3 +92,11 @@ def test_invalid_split_mode_and_threshold_are_rejected():
     split = split_ctr_data(frame, mode="random", seed=42)
     with pytest.raises(ValueError):
         run_ctr_experiment(split, seed=42, threshold=0)
+
+
+def test_precision_is_undefined_without_predicted_clicks():
+    split = split_ctr_data(generate_ctr_data(1500, 42), mode="time", seed=42)
+    result = run_ctr_experiment(split, seed=42, threshold=0.99)
+    assert not np.any(result.test_probabilities >= 0.99)
+    assert result.test_metrics.precision is None
+    assert result.test_metrics.recall == 0

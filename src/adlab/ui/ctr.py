@@ -33,16 +33,27 @@ def render_ctr() -> None:
     st.caption("数据、用户 ID 和历史记录均为合成；历史计数固定来自模拟期之前，当前点击不会回填到特征中。")
 
     st.subheader("2 · 参数设置与运行实验")
+    previous_config = st.session_state["ctr_run"][3] if "ctr_run" in st.session_state else {}
     with st.form("ctr_inputs"):
         left, right = st.columns(2)
-        n_exposures = left.number_input("合成曝光数量", min_value=1000, max_value=20_000, value=5000, step=1000)
-        seed = right.number_input("随机种子", min_value=0, max_value=2**32 - 1, value=42, step=1)
+        n_exposures = left.number_input(
+            "合成曝光数量", min_value=1000, max_value=20_000,
+            value=previous_config.get("n_exposures", 5000), step=1000,
+        )
+        seed = right.number_input(
+            "随机种子", min_value=0, max_value=2**32 - 1,
+            value=previous_config.get("seed", 42), step=1,
+        )
         mode = st.radio(
             "数据划分", options=("time", "random"),
             format_func=lambda value: "按时间顺序（推荐）" if value == "time" else "随机分层",
+            index=0 if previous_config.get("split_mode", "time") == "time" else 1,
             horizontal=True,
         )
-        threshold = st.number_input("分类阈值（仅用于 Precision / Recall）", min_value=0.01, max_value=0.99, value=0.10, step=0.01)
+        threshold = st.number_input(
+            "分类阈值（仅用于 Precision / Recall）", min_value=0.01, max_value=0.99,
+            value=previous_config.get("threshold", 0.10), step=0.01,
+        )
         st.caption("固定比例：训练 60% · 验证 20% · 测试 20%。类别编码与数值标准化只在训练集拟合。")
         submitted = st.form_submit_button("运行 CTR 实验", type="primary")
 
@@ -78,7 +89,10 @@ def render_ctr() -> None:
 
 def _metric_row(name: str, metrics) -> dict:
     values = asdict(metrics)
-    return {"模型": name, **{label: round(values[key], 4) for key, label in METRIC_LABELS}}
+    return {
+        "模型": name,
+        **{label: "N/A" if values[key] is None else round(values[key], 4) for key, label in METRIC_LABELS},
+    }
 
 
 def _render_results(frame, split: CTRDataSplit, result: CTRExperimentResult, config: dict) -> None:
@@ -87,6 +101,7 @@ def _render_results(frame, split: CTRDataSplit, result: CTRExperimentResult, con
         f"本次数据为合成曝光 {len(frame):,} 条，整体模拟点击率 {frame.clicked.mean():.2%}；"
         f"划分方式：{'时间顺序' if split.mode == 'time' else '随机分层'}。"
     )
+    st.caption(f"以下结果对应上次运行参数：曝光 {config['n_exposures']:,} 条 · 种子 {config['seed']} · 分类阈值 {config['threshold']:.2f}。")
     counts = {"train": len(split.train), "validation": len(split.validation), "test": len(split.test)}
     st.write(f"训练集 {counts['train']:,} 条 · 验证集 {counts['validation']:,} 条 · 测试集 {counts['test']:,} 条")
     if split.mode == "time":
@@ -107,6 +122,8 @@ def _render_results(frame, split: CTRDataSplit, result: CTRExperimentResult, con
     st.success(f"验证集选中：{result.selected_name}。以下测试集指标仅针对该模型。")
     st.dataframe([_metric_row(result.selected_name, result.test_metrics)], hide_index=True, width="stretch")
     st.caption(f"Precision 与 Recall 的概率阈值为 {result.threshold:.2f}；AUC、Log Loss 与 Brier Score 使用原始预测概率。")
+    if result.test_metrics.precision is None:
+        st.warning("此阈值下测试集没有预测点击：Precision 未定义，显示 N/A；真实点击仍存在，因此 Recall 为 0。")
 
     st.subheader("5 · 结果可视化")
     st.plotly_chart(roc_figure(result.test_labels, result.test_probabilities), width="stretch")

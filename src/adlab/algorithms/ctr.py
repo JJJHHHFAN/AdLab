@@ -39,7 +39,7 @@ class CTRDataSplit:
 class CTRMetrics:
     auc_roc: float
     log_loss: float
-    precision: float
+    precision: float | None
     recall: float
     brier_score: float
 
@@ -110,7 +110,7 @@ def _metrics(labels: np.ndarray, probabilities: np.ndarray, threshold: float) ->
     return CTRMetrics(
         auc_roc=float(roc_auc_score(labels, probabilities)),
         log_loss=float(log_loss(labels, probabilities, labels=[0, 1])),
-        precision=float(precision_score(labels, predictions, zero_division=0)),
+        precision=float(precision_score(labels, predictions)) if predictions.any() else None,
         recall=float(recall_score(labels, predictions, zero_division=0)),
         brier_score=float(brier_score_loss(labels, probabilities)),
     )

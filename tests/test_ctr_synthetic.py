@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 
 from adlab.data.ctr_synthetic import generate_ctr_data
 
@@ -37,3 +38,11 @@ def test_invalid_size_and_seed_are_rejected():
             pass
         else:
             raise AssertionError("无效参数应被拒绝")
+
+
+def test_example_csv_is_usable_for_data_exploration():
+    path = Path(__file__).resolve().parents[1] / "examples" / "ctr_sample.csv"
+    frame = pd.read_csv(path)
+    assert len(frame) == 1000
+    assert set(frame.columns) == EXPECTED_COLUMNS
+    assert set(frame.clicked) == {0, 1}
