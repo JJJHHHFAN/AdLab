@@ -1,4 +1,4 @@
-"""A/B 实验结果的本地 SQLite 记录。"""
+"""A/B、竞价与 CTR 实验的本地 SQLite 记录。"""
 
 from dataclasses import asdict, dataclass
 from contextlib import closing
@@ -9,6 +9,7 @@ import sqlite3
 
 from adlab.algorithms.ab_test import ABInput, ABResult
 from adlab.algorithms.auctions import AuctionOutcome, AuctionRequest, Mechanism
+from adlab.algorithms.ctr import CTRExperimentResult
 
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parents[3] / "data" / "adlab.sqlite3"
@@ -28,6 +29,14 @@ class SavedAuctionRun:
     created_at: str
     inputs: dict
     results: dict
+
+
+@dataclass(frozen=True)
+class SavedCTRRun:
+    id: int
+    created_at: str
+    config: dict
+    summary: dict
 
 
 def _table_exists(connection: sqlite3.Connection, name: str) -> bool:
@@ -124,5 +133,59 @@ def list_auction_runs(db_path: Path = DEFAULT_DB_PATH) -> list[SavedAuctionRun]:
         ).fetchall()
     return [
         SavedAuctionRun(id=row[0], created_at=row[1], inputs=json.loads(row[2]), results=json.loads(row[3]))
+        for row in rows
+    ]
+
+
+def save_ctr_run(
+    db_path: Path, config: dict, result: CTRExperimentResult, split_counts: dict[str, int]
+) -> int:
+    """只保存可复现实验配置和聚合指标，不保存逐行曝光或模型。"""
+    db_path = Path(db_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    summary = {
+        "selected_model": result.selected_name,
+        "threshold": result.threshold,
+        "split_counts": split_counts,
+        "validation_metrics": {name: asdict(metrics) for name, metrics in result.validation_metrics.items()},
+        "test_metrics": asdict(result.test_metrics),
+    }
+    with closing(sqlite3.connect(db_path)) as connection:
+        with connection:
+            connection.execute(
+                """CREATE TABLE IF NOT EXISTS ctr_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    created_at TEXT NOT NULL,
+                    schema_version INTEGER NOT NULL,
+                    config_json TEXT NOT NULL,
+                    summary_json TEXT NOT NULL
+                )"""
+            )
+            cursor = connection.execute(
+                "INSERT INTO ctr_runs (created_at, schema_version, config_json, summary_json) VALUES (?, ?, ?, ?)",
+                (
+                    timestamp,
+                    1,
+                    json.dumps(config, ensure_ascii=False, allow_nan=False),
+                    json.dumps(summary, ensure_ascii=False, allow_nan=False),
+                ),
+            )
+            return int(cursor.lastrowid)
+
+
+def list_ctr_runs(db_path: Path = DEFAULT_DB_PATH) -> list[SavedCTRRun]:
+    """按最近记录优先读取 CTR 实验；旧数据库可无此表。"""
+    db_path = Path(db_path)
+    if not db_path.exists():
+        return []
+    with closing(sqlite3.connect(db_path)) as connection:
+        if not _table_exists(connection, "ctr_runs"):
+            return []
+        rows = connection.execute(
+            "SELECT id, created_at, config_json, summary_json FROM ctr_runs ORDER BY id DESC"
+        ).fetchall()
+    return [
+        SavedCTRRun(id=row[0], created_at=row[1], config=json.loads(row[2]), summary=json.loads(row[3]))
         for row in rows
     ]

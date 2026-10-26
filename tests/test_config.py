@@ -23,5 +23,5 @@ def test_experiment_identifiers_are_unique_and_lookup_is_stable():
 
 def test_future_experiments_are_not_marked_complete():
     assert {item.slug for item in EXPERIMENTS if item.status == "available"} == {
-        "home", "auction", "ab_test", "records", "docs"
+        "home", "auction", "ctr", "ab_test", "records", "docs"
     }

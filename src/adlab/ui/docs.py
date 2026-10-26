@@ -4,9 +4,9 @@ import streamlit as st
 
 
 def render_docs() -> None:
-    st.caption("LEARNING NOTES  /  阶段 3")
+    st.caption("LEARNING NOTES  /  阶段 4")
     st.title("学习文档 · Learning Notes")
-    st.write("当前已完成 A/B 测试与广告竞价章节；其他算法章节会随对应实验加入。")
+    st.write("当前已完成 A/B 测试、广告竞价与 CTR 预测章节；其他算法章节会随对应实验加入。")
 
     st.subheader("A/B 测试：先定义要比较什么")
     st.write(
@@ -59,3 +59,27 @@ def render_docs() -> None:
         "[Google Ads 的 Ad Rank 说明](https://support.google.com/google-ads/answer/1722122?hl=en)"
     )
     st.caption("完整公式与预算规则见项目目录中的 docs/auction-methods.md。")
+
+    st.divider()
+    st.subheader("CTR 预测：先划分，再拟合")
+    st.write(
+        "一条合成曝光对应一个点击标签。前期历史互动是模拟期以前的固定快照；"
+        "用户 ID 与目标标签不进入模型。时间划分让较晚的曝光只用于验证和测试。"
+    )
+    st.latex(r"\hat p=\sigma(\beta_0+\beta^\top x),\qquad "
+             r"\mathrm{Brier}=\frac1n\sum_i(\hat p_i-y_i)^2")
+    st.write(
+        "Logistic Regression 与 Random Forest 都在训练集拟合。验证集 Log Loss 用于选模型；"
+        "测试集只评估选中的模型。Precision 和 Recall 的阈值可调，其余概率指标不使用该阈值。"
+    )
+    st.write(
+        "手算示例：预测概率 0.1、0.7、0.2、0.6 对应真实点击 0、1、0、1，"
+        "Brier Score = (0.01 + 0.09 + 0.04 + 0.16) / 4 = 0.075。"
+    )
+    st.warning("合成数据的测试集指标不能推断真实平台 CTR；Brier Score 也不能单独代表校准程度。")
+    st.markdown(
+        "延伸阅读：[scikit-learn 数据泄漏建议](https://scikit-learn.org/stable/common_pitfalls) · "
+        "[模型评估指标](https://scikit-learn.org/stable/modules/model_evaluation.html) · "
+        "[校准曲线](https://scikit-learn.org/stable/modules/generated/sklearn.calibration.calibration_curve.html)"
+    )
+    st.caption("字段、划分和完整公式见项目目录中的 docs/ctr-methods.md。")
