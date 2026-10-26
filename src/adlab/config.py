@@ -19,7 +19,7 @@ class Experiment:
 
 EXPERIMENTS: tuple[Experiment, ...] = (
     Experiment("home", "首页", "Overview", "从实验理解计算广告的核心机制。", 1, "available"),
-    Experiment("auction", "广告竞价", "Ad Auctions", "比较出价、排名与支付规则。", 3, "planned"),
+    Experiment("auction", "广告竞价", "Ad Auctions", "比较出价、排名与支付规则。", 3, "available"),
     Experiment("ctr", "CTR 预测", "Click-Through Rate", "学习数据划分、概率预测与校准。", 4, "planned"),
     Experiment("budget", "预算优化", "Budget Allocation", "在约束条件下分配广告计划预算。", 5, "planned"),
     Experiment("ab_test", "A/B 测试", "A/B Testing", "分析比例差异、区间和统计功效。", 2, "available"),

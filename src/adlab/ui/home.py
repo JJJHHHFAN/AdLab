@@ -11,11 +11,11 @@ def render_home() -> None:
     st.write(
         "AdLab 用可修改参数、可运行算法和可解释的结果，帮助你学习竞价、预测、统计检验和投放优化。"
     )
-    st.success("第二阶段已开放：A/B 测试可运行、可解释，并可在本机保存实验记录。")
+    st.success("第三阶段已开放：A/B 测试与广告竞价实验均可运行，并可在本机保存结果。")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("计划实验", "5 个")
-    col2.metric("当前阶段", "2 / 7")
+    col2.metric("当前阶段", "3 / 7")
     col3.metric("数据来源", "本地 / 合成")
 
     st.subheader("学习路径")

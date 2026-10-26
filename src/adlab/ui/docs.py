@@ -4,9 +4,9 @@ import streamlit as st
 
 
 def render_docs() -> None:
-    st.caption("LEARNING NOTES  /  阶段 2")
+    st.caption("LEARNING NOTES  /  阶段 3")
     st.title("学习文档 · Learning Notes")
-    st.write("当前已完成 A/B 测试章节；其他算法章节会随对应实验加入。")
+    st.write("当前已完成 A/B 测试与广告竞价章节；其他算法章节会随对应实验加入。")
 
     st.subheader("A/B 测试：先定义要比较什么")
     st.write(
@@ -38,3 +38,24 @@ def render_docs() -> None:
         """
     )
     st.warning("不要把 p 值读成原假设成立的概率；不要因为中途看见显著就提前停止。")
+
+    st.divider()
+    st.subheader("广告竞价：排名与支付是两个步骤")
+    st.write(
+        "第一价格、第二价格按出价排名，仅分配顶部广告位；GSP 为多个广告位分别确定下一名价格。"
+        "质量分调整机制按出价与质量分的乘积排序，再把下一名排序分除以获胜者质量分。"
+    )
+    st.latex(r"s_i=b_iq_i,\qquad CPC_i=\frac{s_{i+1}}{q_i}")
+    st.write(
+        "教学算例中，A、B、C 出价为 5、4、2，两个广告位 CTR 为 10%、5%，每位有 1,000 次展示机会。"
+        "GSP 中 A 支付 4、B 支付 2，平台期望收入为 500。"
+    )
+    st.write(
+        "预算只截断本周期的期望点击，不动态重排；点击价值用于计算广告主期望净收益。"
+        "真实平台使用更多实时信号和阈值，本实验公式仅用于理解机制。"
+    )
+    st.markdown(
+        "延伸阅读：[GSP 原始论文](https://web.stanford.edu/~ost/papers/gsp-final.pdf) · "
+        "[Google Ads 的 Ad Rank 说明](https://support.google.com/google-ads/answer/1722122?hl=en)"
+    )
+    st.caption("完整公式与预算规则见项目目录中的 docs/auction-methods.md。")

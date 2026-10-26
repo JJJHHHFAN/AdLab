@@ -1,10 +1,10 @@
 # AdLab — Computational Advertising Laboratory
 
-AdLab 是一个免费、开源、可在本地运行的计算广告教学实验平台。当前已完成第一版 MVP：基础界面与 A/B 测试实验室。
+AdLab 是一个免费、开源、可在本地运行的计算广告教学实验平台。当前已完成前三阶段：基础界面、A/B 测试实验室和广告竞价模拟器。
 
 代码采用 [MIT 许可证](LICENSE)。
 
-后续将依次加入广告竞价、CTR 预测、预算优化和多臂老虎机实验。未实现的实验不会展示虚构结果。
+后续将依次加入 CTR 预测、预算优化和多臂老虎机实验。未实现的实验不会展示虚构结果。
 
 ## 本地运行
 
@@ -27,18 +27,19 @@ uv run pytest
 
 - 首页：了解学习路径、实验原则和开发状态。
 - A/B 测试：输入两组用户、点击和转化人数；选择主指标与显著性水平；查看置信区间、p 值、解释和样本量估算。
+- 广告竞价：输入广告主出价、质量分、点击价值、预算与广告位 CTR；比较四种机制的排名、支付、期望收益和平台收入。
 - 实验记录：将本次输入与计算结果保存到本机 SQLite 数据库，并在记录页查看。
 - 学习文档：阅读 A/B 测试的概念、公式、完整算例与风险提示。
-- 示例输入：[A/B 教学算例](examples/ab_test_example.json)，与页面预填值一致，非真实投放数据。
+- 示例输入：[A/B 教学算例](examples/ab_test_example.json)与[竞价教学算例](examples/auction_example.json)，均非真实投放数据。
 - 左侧导航：查看八个页面；其余实验明确标为“规划中”。
 
-统计定义、公式与验证算例见 [A/B 测试方法](docs/ab-test-methods.md)。算法层、数据层、可视化层和 UI 的职责见 [架构说明](docs/architecture.md)。阶段任务见 [第一阶段](docs/superpowers/plans/2026-10-25-stage-1-foundation.md)与[第二阶段](docs/superpowers/plans/2026-10-25-stage-2-ab-test.md)。
+统计定义、公式与验证算例见 [A/B 测试方法](docs/ab-test-methods.md)和[竞价方法](docs/auction-methods.md)。算法层、数据层、可视化层和 UI 的职责见 [架构说明](docs/architecture.md)。阶段任务见 [第一阶段](docs/superpowers/plans/2026-10-25-stage-1-foundation.md)、[第二阶段](docs/superpowers/plans/2026-10-25-stage-2-ab-test.md)与[第三阶段](docs/superpowers/plans/2026-10-26-stage-3-auctions.md)。
 
 ## 七阶段路线
 
 1. 项目基础（已完成）
 2. A/B 测试与实验记录（已完成，MVP）
-3. 广告竞价
+3. 广告竞价（已完成）
 4. CTR 预测
 5. 预算优化
 6. 多臂老虎机

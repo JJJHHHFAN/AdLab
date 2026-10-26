@@ -1,5 +1,7 @@
 from adlab.algorithms.ab_test import ABInput, Arm, analyze_ab
 from adlab.data.records import list_runs, save_run
+from adlab.algorithms.auctions import AuctionRequest, Bidder, compare_auctions
+from adlab.data.records import list_auction_runs, save_auction_run
 
 
 def test_saved_run_round_trips_input_result_and_method(tmp_path):
@@ -21,3 +23,28 @@ def test_missing_database_has_no_runs_and_is_not_created(tmp_path):
     db_path = tmp_path / "runs.sqlite3"
     assert list_runs(db_path) == []
     assert not db_path.exists()
+
+
+def test_auction_run_round_trips_all_mechanisms(tmp_path):
+    db_path = tmp_path / "runs.sqlite3"
+    auction_request = AuctionRequest(
+        bidders=(Bidder("A", 5, 1, 8, 1000), Bidder("B", 4, 2, 6, 1000)),
+        slot_ctrs=(0.1, 0.05),
+        impressions=1000,
+    )
+    results = compare_auctions(auction_request)
+    run_id = save_auction_run(db_path, auction_request, results)
+    saved = list_auction_runs(db_path)
+    assert len(saved) == 1
+    assert saved[0].id == run_id
+    assert saved[0].inputs["bidders"][0]["bid"] == 5
+    assert set(saved[0].results) == set(results)
+    assert saved[0].results["first_price"]["platform_revenue"] == 500
+    assert list_runs(db_path) == []
+
+
+def test_auction_history_handles_database_with_only_ab_table(tmp_path):
+    db_path = tmp_path / "runs.sqlite3"
+    inputs = ABInput(Arm(100, 10, 2), Arm(100, 15, 3), 7)
+    save_run(db_path, inputs, analyze_ab(inputs))
+    assert list_auction_runs(db_path) == []

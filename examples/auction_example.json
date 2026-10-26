@@ -1,0 +1,10 @@
+{
+  "description": "教学竞价算例；全部数值是假设输入，不是真实平台数据",
+  "impressions": 1000,
+  "slot_ctrs": [0.10, 0.05],
+  "bidders": [
+    {"bidder_id": "A", "bid": 5, "quality": 1, "value_per_click": 8, "budget": 1000},
+    {"bidder_id": "B", "bid": 4, "quality": 2, "value_per_click": 6, "budget": 1000},
+    {"bidder_id": "C", "bid": 2, "quality": 1, "value_per_click": 3, "budget": 1000}
+  ]
+}
