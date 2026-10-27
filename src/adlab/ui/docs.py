@@ -4,9 +4,9 @@ import streamlit as st
 
 
 def render_docs() -> None:
-    st.caption("LEARNING NOTES  /  阶段 4")
+    st.caption("LEARNING NOTES  /  阶段 5")
     st.title("学习文档 · Learning Notes")
-    st.write("当前已完成 A/B 测试、广告竞价与 CTR 预测章节；其他算法章节会随对应实验加入。")
+    st.write("当前已完成 A/B 测试、广告竞价、CTR 预测与预算优化章节；多臂老虎机章节会随实验加入。")
 
     st.subheader("A/B 测试：先定义要比较什么")
     st.write(
@@ -83,3 +83,25 @@ def render_docs() -> None:
         "[校准曲线](https://scikit-learn.org/stable/modules/generated/sklearn.calibration.calibration_curve.html)"
     )
     st.caption("字段、划分和完整公式见项目目录中的 docs/ctr-methods.md。")
+
+    st.divider()
+    st.subheader("预算优化：预算是约束，CPA 与 ROAS 是预估输入")
+    st.write(
+        "设计划 i 分得预算 xᵢ，预估 CPA 为 cᵢ、预估 ROAS 为 rᵢ。"
+        "预测转化为 xᵢ/cᵢ，预测收入为 xᵢrᵢ。规则法按权重分配，线性规划在相同约束下求最优。"
+    )
+    st.latex(r"\max\sum_i\frac{x_i}{c_i},\qquad \sum_i x_i\le B,\qquad m_i\le x_i\le u_i")
+    st.write(
+        "若目标 CPA 为 C，整体预测约束是 Σxᵢ − C·Σ(xᵢ/cᵢ) ≤ 0。"
+        "预算可能因计划上限或目标 CPA 而剩余。"
+    )
+    st.write(
+        "手算示例：总预算 100，A 的 CPA=10、上限 60，B 的 CPA=20、上限 70；"
+        "最大化预测转化时 A 投 60、B 投 40，预测转化为 6+2=8。"
+    )
+    st.warning("预估收入与一次 Poisson 模拟实现值都不是实际广告投放结果；模型假定 CPA 和 ROAS 不随预算变化。")
+    st.markdown(
+        "延伸阅读：[SciPy 线性规划文档](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html) · "
+        "[NumPy Poisson 抽样](https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.poisson.html)"
+    )
+    st.caption("规则、完整计算示例与局限见项目目录中的 docs/budget-methods.md。")

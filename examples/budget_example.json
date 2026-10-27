@@ -1,0 +1,12 @@
+{
+  "description": "教学模拟参数；非真实广告投放数据",
+  "total_budget": 10000,
+  "objective": "conversions",
+  "target_cpa_when_selected": 23,
+  "seed": 42,
+  "campaigns": [
+    {"campaign_id": "A", "cpa": 20, "roas": 3, "min_spend": 1000, "max_spend": 5000},
+    {"campaign_id": "B", "cpa": 30, "roas": 4, "min_spend": 1000, "max_spend": 5000},
+    {"campaign_id": "C", "cpa": 40, "roas": 2, "min_spend": 500, "max_spend": 4000}
+  ]
+}

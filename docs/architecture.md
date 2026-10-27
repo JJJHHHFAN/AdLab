@@ -14,6 +14,8 @@
 
 第四阶段的 `data/ctr_synthetic.py` 生成合成曝光；`algorithms/ctr.py` 负责原始行划分、训练集内预处理、验证集选模型与测试集评估；`charts/ctr.py` 负责 ROC、概率分布和校准图。CTR 记录只保存生成配置与聚合指标，不保存逐行曝光或模型。
 
+第五阶段的 `algorithms/budget.py` 集中处理预算约束、规则分配、HiGHS 线性规划与一次 Poisson 模拟；`charts/budget.py` 绘制分配对比。`data/records.py` 为预算实验建立独立表，记录输入与结构化的预测/模拟结果。
+
 ## 第一版 MVP
 
 第一、二阶段组成已交付的 MVP：可启动的基础界面，以及完整的 A/B 测试实验室。未开发实验的页面明确显示“规划中”，不输出模拟结果。

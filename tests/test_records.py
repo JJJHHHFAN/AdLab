@@ -5,6 +5,8 @@ from adlab.data.records import list_auction_runs, save_auction_run
 from adlab.algorithms.ctr import run_ctr_experiment, split_ctr_data
 from adlab.data.ctr_synthetic import generate_ctr_data
 from adlab.data.records import list_ctr_runs, save_ctr_run
+from adlab.algorithms.budget import BudgetRequest, Campaign, run_budget_experiment
+from adlab.data.records import list_budget_runs, save_budget_run
 
 
 def test_saved_run_round_trips_input_result_and_method(tmp_path):
@@ -74,3 +76,29 @@ def test_ctr_history_handles_database_with_only_ab_table(tmp_path):
     inputs = ABInput(Arm(100, 10, 2), Arm(100, 15, 3), 7)
     save_run(db_path, inputs, analyze_ab(inputs))
     assert list_ctr_runs(db_path) == []
+
+
+def test_budget_run_round_trips_inputs_and_predictions(tmp_path):
+    db_path = tmp_path / "runs.sqlite3"
+    request = BudgetRequest(
+        100,
+        (Campaign("A", 10, 2, 10, 60), Campaign("B", 20, 5, 10, 70)),
+        "conversions",
+        seed=7,
+    )
+    result = run_budget_experiment(request)
+    run_id = save_budget_run(db_path, request, result)
+    saved = list_budget_runs(db_path)
+    assert len(saved) == 1
+    assert saved[0].id == run_id
+    assert saved[0].inputs["campaigns"][0]["cpa"] == 10
+    assert saved[0].results["optimized"]["predicted_conversions"] == result.optimized.predicted_conversions
+    assert saved[0].results["optimized"]["simulated_conversions"] == result.optimized.simulated_conversions
+    assert list_runs(db_path) == []
+
+
+def test_budget_history_handles_database_with_only_ab_table(tmp_path):
+    db_path = tmp_path / "runs.sqlite3"
+    inputs = ABInput(Arm(100, 10, 2), Arm(100, 15, 3), 7)
+    save_run(db_path, inputs, analyze_ab(inputs))
+    assert list_budget_runs(db_path) == []

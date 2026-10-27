@@ -6,6 +6,7 @@ from adlab.config import EXPERIMENTS, get_experiment
 from adlab.ui.ab_test import render_ab_test
 from adlab.ui.auction import render_auction
 from adlab.ui.ctr import render_ctr
+from adlab.ui.budget import render_budget
 from adlab.ui.docs import render_docs
 from adlab.ui.home import render_home
 from adlab.ui.planned import render_planned
@@ -29,7 +30,7 @@ with st.sidebar:
         label_visibility="collapsed",
     )
     st.divider()
-    st.caption("本地运行 · 免费开源 · 第四阶段")
+    st.caption("本地运行 · 免费开源 · 第五阶段")
 
 if selected_slug == "home":
     render_home()
@@ -39,6 +40,8 @@ elif selected_slug == "auction":
     render_auction()
 elif selected_slug == "ctr":
     render_ctr()
+elif selected_slug == "budget":
+    render_budget()
 elif selected_slug == "records":
     render_records()
 elif selected_slug == "docs":
