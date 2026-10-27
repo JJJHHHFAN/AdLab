@@ -65,6 +65,60 @@ def test_total_plan_caps_can_leave_budget_unspent(campaigns):
     assert result.optimized.unspent_budget == pytest.approx(20)
 
 
+def test_small_positive_conversion_volume_is_valid_under_target_cpa():
+    request = BudgetRequest(
+        0.01, (Campaign("A", 1e6, 1, 0.01, 0.01),),
+        "target_cpa", target_cpa=1e6, seed=7,
+    )
+    result = run_budget_experiment(request)
+    assert result.optimized.predicted_conversions == pytest.approx(1e-8)
+    assert result.optimized.predicted_cpa == pytest.approx(1e6)
+
+
+def test_tiny_positive_budget_cap_is_not_treated_as_zero():
+    campaigns = (Campaign("A", 20, 2, 0, 1e-8),)
+    for objective, target in (("conversions", None), ("target_cpa", 20)):
+        result = run_budget_experiment(BudgetRequest(0.01, campaigns, objective, target, 7))
+        assert result.rule.total_spend == pytest.approx(1e-8)
+        assert result.optimized.total_spend == pytest.approx(1e-8)
+        assert result.rule.predicted_cpa == pytest.approx(20)
+
+
+def test_minimum_spend_cannot_exceed_total_budget_even_by_small_amount():
+    request = BudgetRequest(
+        0.01, (Campaign("A", 10, 2, 0.01000009, 0.01000009),), "conversions"
+    )
+    with pytest.raises(ValueError, match="最低投放之和超过总预算"):
+        run_budget_experiment(request)
+
+
+def test_decimal_minimums_equal_to_budget_are_accepted():
+    request = BudgetRequest(
+        0.3,
+        (Campaign("A", 10, 2, 0.1, 0.1), Campaign("B", 20, 2, 0.2, 0.2)),
+        "conversions",
+    )
+    result = run_budget_experiment(request)
+    assert result.rule.total_spend <= request.total_budget
+    assert result.optimized.total_spend <= request.total_budget
+
+
+def test_roundoff_does_not_make_normal_budget_allocation_fail():
+    request = BudgetRequest(
+        186.78,
+        (
+            Campaign("A", 75.09, 5.41, 18.6, 105.14000000000001),
+            Campaign("B", 48.47, 0.53, 36.17, 86.07),
+            Campaign("C", 97.83, 0.65, 49.76, 148.45),
+        ),
+        "conversions",
+    )
+    result = run_budget_experiment(request)
+    for outcome in (result.rule, result.optimized):
+        assert outcome.total_spend <= request.total_budget
+        assert sum(item.spend for item in outcome.allocations) <= request.total_budget
+
+
 def test_simulated_realization_is_reproducible_and_separate_from_prediction(campaigns):
     request = BudgetRequest(100, campaigns, "conversions", seed=31)
     first = run_budget_experiment(request)

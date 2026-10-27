@@ -1,7 +1,8 @@
 """固定周期内的教学预算分配、线性规划与随机结果模拟。"""
 
 from dataclasses import dataclass
-from math import isfinite
+from decimal import Decimal
+from math import fsum, isfinite, ulp
 from typing import Literal
 
 import numpy as np
@@ -13,7 +14,6 @@ Strategy = Literal["rule", "optimized"]
 MAX_BUDGET = 1e9
 MAX_CPA = 1e6
 MAX_ROAS = 1e3
-TOLERANCE = 1e-7
 
 
 @dataclass(frozen=True)
@@ -99,7 +99,9 @@ def _validate(request: BudgetRequest) -> None:
         _number(campaign.max_spend, f"{campaign.campaign_id} 的预算上限", 0, MAX_BUDGET)
         if campaign.min_spend > campaign.max_spend:
             raise ValueError(f"{campaign.campaign_id} 的最低投放不能超过预算上限")
-    if sum(campaign.min_spend for campaign in request.campaigns) > request.total_budget + TOLERANCE:
+    if sum(Decimal(str(campaign.min_spend)) for campaign in request.campaigns) > Decimal(
+        str(request.total_budget)
+    ):
         raise ValueError("各计划最低投放之和超过总预算")
 
 
@@ -120,27 +122,30 @@ def _rule_allocation(request: BudgetRequest) -> np.ndarray:
             addition = max(0.0, room)
             spend[index] += addition
             remaining -= addition
-        if float(coefficients @ spend) > TOLERANCE or float(spend.sum()) <= TOLERANCE:
+        total_spend = float(spend.sum())
+        conversions = float(np.sum(spend / cpas))
+        if conversions == 0 or total_spend / conversions > float(request.target_cpa) * (1 + 1e-7):
             raise ValueError("规则法找不到满足目标 CPA 的正投放方案")
         return spend
 
     scores = 1 / cpas if request.objective == "conversions" else np.array(
         [campaign.roas for campaign in campaigns], dtype=float
     )
-    while remaining > TOLERANCE:
+    while remaining > 0:
         room = np.maximum(0, caps - spend)
-        active = room > TOLERANCE
+        active = room > 0
         if not active.any():
             break
         weights = np.where(active, scores, 0.0)
         if not weights.any():
             weights = active.astype(float)
         addition = np.minimum(room, remaining * weights / weights.sum())
-        applied = float(addition.sum())
-        if applied <= TOLERANCE:
+        new_spend = np.minimum(caps, spend + addition)
+        applied = float((new_spend - spend).sum())
+        if applied <= 0:
             break
-        spend += addition
-        remaining -= applied
+        spend = new_spend
+        remaining = max(0.0, request.total_budget - float(spend.sum()))
     return spend
 
 
@@ -162,16 +167,51 @@ def _optimal_allocation(request: BudgetRequest) -> np.ndarray:
     )
     if not result.success:
         raise ValueError("预算、上下限与目标 CPA 约束没有可行解")
-    spend = np.where(np.abs(result.x) < 1e-9, 0.0, result.x)
-    if request.objective == "target_cpa" and float(np.sum(spend / cpas)) <= TOLERANCE:
-        raise ValueError("目标 CPA 下只有零投放解，无法定义整体 CPA")
+    spend = np.maximum(result.x, 0.0)
+    if request.objective == "target_cpa":
+        conversions = float(np.sum(spend / cpas))
+        if conversions == 0:
+            raise ValueError("目标 CPA 下只有零投放解，无法定义整体 CPA")
+        if float(spend.sum()) / conversions > float(request.target_cpa) * (1 + 1e-7):
+            raise ValueError("求解结果未满足整体预测目标 CPA，请调整输入范围")
+    return spend
+
+
+def _normalize_allocation(request: BudgetRequest, spend: np.ndarray) -> np.ndarray:
+    """只修正浮点舍入误差；真正违反预算或上下限时拒绝结果。"""
+    spend = spend.copy()
+    budget_tolerance = 8 * len(spend) * ulp(max(1.0, request.total_budget))
+    for index, campaign in enumerate(request.campaigns):
+        limit = 8 * ulp(max(1.0, campaign.max_spend))
+        if spend[index] < campaign.min_spend - limit or spend[index] > campaign.max_spend + limit:
+            raise ValueError("分配结果未满足单计划预算上下限，请调整输入范围")
+        spend[index] = min(campaign.max_spend, max(campaign.min_spend, spend[index]))
+
+    excess = fsum(float(value) for value in spend) - request.total_budget
+    if excess > budget_tolerance:
+        raise ValueError("分配结果超过总预算，请调整输入范围")
+    if excess > 0:
+        # 优先削减高 CPA 计划；每次重算，以免一次浮点减法后仍超出一 ULP。
+        for index in sorted(range(len(spend)), key=lambda i: request.campaigns[i].cpa, reverse=True):
+            room = spend[index] - request.campaigns[index].min_spend
+            if room <= 0:
+                continue
+            spend[index] = max(request.campaigns[index].min_spend, spend[index] - min(excess, room))
+            excess = fsum(float(value) for value in spend) - request.total_budget
+            if excess <= 0:
+                break
     return spend
 
 
 def _summarize(request: BudgetRequest, spend: np.ndarray, strategy: Strategy) -> BudgetOutcome:
+    spend = _normalize_allocation(request, spend)
     cpas = np.array([campaign.cpa for campaign in request.campaigns], dtype=float)
     roas = np.array([campaign.roas for campaign in request.campaigns], dtype=float)
     predicted_conversions = spend / cpas
+    if request.objective == "target_cpa":
+        conversions = float(np.sum(predicted_conversions))
+        if conversions == 0 or float(spend.sum()) / conversions > float(request.target_cpa) * (1 + 1e-7):
+            raise ValueError("分配结果未满足整体预测目标 CPA，请调整输入范围")
     predicted_revenue = spend * roas
     # 两种策略分别从相同种子重新开始；相同分配会得到相同模拟值。
     simulated_conversions = np.random.default_rng(request.seed).poisson(predicted_conversions)
@@ -187,7 +227,7 @@ def _summarize(request: BudgetRequest, spend: np.ndarray, strategy: Strategy) ->
         )
         for index, campaign in enumerate(request.campaigns)
     )
-    total_spend = float(spend.sum())
+    total_spend = min(request.total_budget, fsum(float(value) for value in spend))
     total_predicted_conversions = float(predicted_conversions.sum())
     total_predicted_revenue = float(predicted_revenue.sum())
     total_simulated_conversions = int(simulated_conversions.sum())

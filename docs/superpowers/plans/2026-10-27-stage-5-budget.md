@@ -22,7 +22,7 @@
 2. [x] 实现 `src/adlab/algorithms/budget.py` 的输入类型、规则分配、HiGHS 求解、模拟与聚合；运行核心测试。
 3. [x] 在 `tests/test_budget_ui.py` 写默认页面运行及参数恢复测试；实现 `src/adlab/charts/budget.py`、`src/adlab/ui/budget.py`，接入 `app.py` 和 `config.py`。
 4. [x] 在 `tests/test_records.py` 写预算记录往返和旧数据库兼容测试；扩展 `src/adlab/data/records.py` 与记录页。
-5. [ ] 更新首页、README、架构、学习文档、方法文档及示例配置；完成本地页面和全量测试，并独立审查。
+5. [x] 更新首页、README、架构、学习文档、方法文档及示例配置；完成本地页面和全量测试，并独立审查。
 
 ## 验收
 
