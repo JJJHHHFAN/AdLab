@@ -11,17 +11,21 @@ AdLab 是一个免费、开源、可在本地运行的计算广告教学实验�
 需要 Python 3.12 和 `uv`。本项目优先在 Apple Silicon Mac 上验证，也可在其他支持 Python 3.12 的电脑运行。
 
 ```bash
-uv sync --python 3.12
+uv sync --locked --python 3.12
 uv run streamlit run app.py
 ```
 
 打开终端显示的本地地址。运行测试：
 
 ```bash
-uv run pytest
+uv run --frozen pytest -q
 ```
 
 请始终使用 `uv run`，以保证启动命令与依赖使用同一虚拟环境。项目没有付费 API 和云服务依赖。
+
+## 自动检查
+
+提交到 `main`、创建 Pull Request 或在 Actions 手动运行 `tests`，会用 Python 3.12 和 `uv.lock` 中的依赖执行测试。检查覆盖算法、记录保存、实验交互以及全部八个导航页面的启动；不需要付费 API 或云数据库。测试输入为教学算例或合成数据，不代表真实投放效果。
 
 ## 目前可以使用什么
 
